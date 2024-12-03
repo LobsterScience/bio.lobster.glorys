@@ -2,8 +2,7 @@
 require(bio.lobster)
 require(satin)
 require(tidyr)
-require(PBSmapping)
-setwd('~/tmp/GLORYS')
+setwd(file.path(project.datadirectory('bio.lobster.glorys'),'Downloads'))
 
 y1 = read.cmems('GLORYS2020-01-01.nc')
 a = y1$bottomT

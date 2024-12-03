@@ -1,5 +1,5 @@
 #' @export
-glorysReshape <- function(glorysfile=file.path(project.datadirectory('bio.lobster'),'data','GLORYS','GLORYS1993'),redo=F){
+glorysReshapeLong <- function(glorysfile=file.path(project.datadirectory('bio.lobster.glorys'),'Downloads','GLORYS1994-01-01'),redo=F){
 				require(satin)
 				require(dplyr) 
 				options(stringsAsFactors=F)

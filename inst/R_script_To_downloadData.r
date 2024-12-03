@@ -2,9 +2,11 @@
 
 # Please run install.packages("lubridate") is you have not already installed it
 library(lubridate)
+require(bio.lobster)
 
-outdir = setwd("~/tmp/GLORYS") # set work directory
-print(outdir)
+setwd(file.path(project.datadirectory('bio.lobster.glorys'),'Downloads')) # set work directory
+outdir = getwd()
+
 
 # ================ Variables for your query ================
 
@@ -17,8 +19,8 @@ dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 variable <- c(" --variable so --variable bottomT")
 
 # Time range
-date_min = ymd(20040101) # start_date
-date_max = ymd(20041231) # end_date
+date_min = ymd(19940101) # start_date
+date_max = ymd(19941231) # end_date
 
 # Geographic area and depth level 
 lon = list(-70, -58)  # lon_min, lon_max
@@ -57,9 +59,9 @@ dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 
 dmi = list()
 dmx = list()
-os = 20040101
-oe = 20041231
-yrs = 2021-2004+1
+os = 19950101
+oe = 19951231
+yrs = 2003-1995+1
 for(i in 1:yrs){
   if(i==1) {
     dmi[[i]]=ymd(os)
@@ -70,7 +72,7 @@ for(i in 1:yrs){
   }
 }
 #if date is early https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/download?dataset=cmems_mod_glo_phy_my_0.083deg_P1D-m_202311
-dmx[[yrs]] = ymd(20210630)
+#dmx[[yrs]] = ymd(20210630)
 
 
 #now loop through commands
