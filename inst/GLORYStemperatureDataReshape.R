@@ -12,9 +12,9 @@ image(a@lon, a@lat, t(a@data[,,300,]))
 
 #glorys reshape to r Object
 
-for(i in 1:length(fil)){
+for(i in 2:length(fil)){
 		g = glorysReshapeLong(glorysfile=file.path('Downloads',fil[i]))
-		saveRDS(g,file = file.path('SummaryFiles',paste(fil[i],'ShelfBoF.rds',sep="_")))
+		saveRDS(g,file = file.path('Summary',paste(fil[i],'ShelfBoF.rds',sep="_")))
 		print(fil[i])
 	}
 
