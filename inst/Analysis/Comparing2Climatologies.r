@@ -100,9 +100,12 @@ c24 = bind_rows(out)
 
 clims = bind_rows(c23,c24)
 
-clims$ano = clims$bottomT - clims$clim
+clims$Anomaly = clims$bottomT - clims$clim
+saveRDS(clims,file='ClimatologyGlorys20232024.rds')
+#clims = readRDS(file='ClimatologyGlorys20232024.rds')
+
 require(ggplot2)
-ggplot(subset(clims,yr==2023),aes(fill=ano,colour=ano))+geom_sf(size=1)+
+ggplot(subset(clims,yr==2023),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
   scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
   facet_wrap(~mn)+
@@ -110,7 +113,7 @@ ggplot(subset(clims,yr==2023),aes(fill=ano,colour=ano))+geom_sf(size=1)+
   labs(title=2023)
 
 
-ggplot(subset(clims,yr==2024),aes(fill=ano,colour=ano))+geom_sf(size=1)+
+ggplot(subset(clims,yr==2024),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
   scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
   facet_wrap(~mn)+
