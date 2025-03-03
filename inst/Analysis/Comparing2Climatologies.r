@@ -100,9 +100,9 @@ c24 = bind_rows(out)
 
 clims = bind_rows(c23,c24)
 
-clims$Anomaly = clims$bottomT - clims$clim
 saveRDS(clims,file='ClimatologyGlorys20232024.rds')
 #clims = readRDS(file='ClimatologyGlorys20232024.rds')
+clims$Anomaly = clims$bottomT - clims$clim
 
 require(ggplot2)
 ggplot(subset(clims,yr==2023),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
