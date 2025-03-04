@@ -33,20 +33,22 @@ xl <- xl %>%
   ungroup()
 xl$location_label <- NULL
 xl$Date = as.Date(xl$Date)
-ii = unique(xl$location_id)
-xlx = xl
-st_geometry(xlx) <- NULL
+
 saveRDS(xl,'marineHeatWave_pre_processing.rds')
 xl = readRDS('marineHeatWave_pre_processing.rds')
-
-dis <- xl %>%
-  distinct(location_id, .keep_all = TRUE)
+ii = unique(xl$location_id)
 
 ou = list()
-for(i in 1:length(ii)){
-    x = subset(xlx,location_id==ii[i],select=c(Date,bottomT,location_id))
+m=1160
+for(i in 6581:length(ii)){
+  print(i)
+    x = subset(xl,location_id==ii[i],select=c(Date,bottomT,location_id))
+    xloc = st_coordinates(x[1,])
+    st_geometry(x) <- NULL
     x$t = x$Date
     x$temp = x$bottomT
+    if(nrow(subset(x,!is.na(temp)))>0){
+    m=m+1      
     x = x[,c('t','temp','location_id')]
     g = ts2clm3(x,climatologyPeriod = c('1994-01-01','2016-12-31'),pctile=c(0.9)  )
     g1 = ts2clm3(x,climatologyPeriod = c('1994-01-01','2016-12-31'),pctile=c(0.1)  )
@@ -54,16 +56,22 @@ for(i in 1:length(ii)){
     g = g[!duplicated(g)]
     g1 = subset(g1,!is.na(temp))
     g1 = g1[!duplicated(g1)]
-    
-    ou[[i]] = merge(as.data.frame(g),as.data.frame(g1[,c('t','location_id','thresh')]),by=c('t','location_id'))
+    bb = merge(as.data.frame(g),as.data.frame(g1[,c('t','location_id','thresh')]),by=c('t','location_id'))
+    bb$X = xloc[1]
+    bb$Y = xloc[2]
+    ou[[m]] = bb
+    }
 }
 
 out2 = bind_rows(ou)
 
 saveRDS(out2,file='marineHeatWave_post_processing.rds')
 out2 = readRDS(file='marineHeatWave_post_processing.rds')
+ii = unique(out2$location_id)
 
-out = merge(out2,dis[,c('location_id')],by='location_id')
+v = subset(out2,location_id==ii[1])
+v$doy = lubridate::yday(v$t)
+v$yr = lubridate::year(v$t)
 
 require(ggplot2)
 ggplot(subset(clims,yr==2023),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
