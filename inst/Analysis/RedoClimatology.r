@@ -10,11 +10,12 @@ la()
 setwd(file.path(project.datadirectory('bio.lobster.glorys'),'Analysis','Marine_Heat_Cold_Waves'))
 if(redo){
 #glorys reshape to r Object
-
+setwd(file.path(project.datadirectory('bio.lobster.glorys')))
+  
 xx = dir('Summary')
 xy = xx[grep('-01-01',xx)]
-#pattern = "GLORYS(199[3-9]|200[0-9]|201[0-6])-01-01\\.nc_ShelfBoF\\.rds"
-#xy = xy[grep(pattern,xy)]
+pattern = "GLORYS(199[3-9]|200[0-9]|201[0-6])-01-01\\.nc_ShelfBoF\\.rds"
+xy = xy[grep(pattern,xy)]
 
 xl=list()
 for(i in 1:length(xy)){
@@ -34,7 +35,7 @@ xl <- xl %>%
 xl$location_label <- NULL
 xl$Date = as.Date(xl$Date)
 
-saveRDS(xl,'marineHeatWave_pre_processing.rds')
+saveRDS(xl,'climatologyData_pre_processing.rds')
 xl = readRDS('marineHeatWave_pre_processing.rds')
 ii = unique(xl$location_id)
 
@@ -87,6 +88,27 @@ saveRDS(summary_mcw,file='marinecoldWave_summary.rds')
 saveRDS(output_mhw,file='marineheatWave_post_processing.rds')
 saveRDS(summary_mhw,file='marineheatWave_summary.rds')
 }
+
+###climatology mins a maxs for seasonal cycle
+oh = readRDS(file='marineheatWave_post_processing.rds')
+oh = subset(oh,yr==1994)
+
+oha = oh %>%
+      group_by(location_id, X,Y) %>%
+      summarise(
+        mint = min(seas),
+        maxt = max(seas)
+      )
+ohas = st_as_sf(oha,coords=c('X','Y'),crs=4326)
+ohas$Range = ohas$maxt - ohas$mint
+
+ggplot(ohas,aes(fill=Range,colour=Range))+geom_sf(size=1)+
+  scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
+  theme_test_adam()
+
+#######################
+
 
 smhw = readRDS(file='marineheatWave_summary.rds')
 smhw$Mon = lubridate::month(smhw$date_peak)
