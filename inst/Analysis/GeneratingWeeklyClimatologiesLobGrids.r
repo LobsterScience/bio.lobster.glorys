@@ -28,6 +28,7 @@ da = bind_rows(data_list)
 da$yr = lubridate::year(da$Date)
 da$woy = lubridate::week(da$Date)
 save(da,file="GlorysTemps2005_2024.rds")
+da = load('GlorysTemps2005_2024.rds')
 
 filtered_files <- files
 # Read the filtered files into R
@@ -58,10 +59,13 @@ dagA = aggregate(climT~LFA+GRID_NO+woy,data=dags,FUN=function(x)quantile(x,c(0.0
 grr = merge(dagA,gtot)
 saveRDS(grr,file='WeeklyClimatology1993_2016_byGrid.rds')
 
-#data by grid grouping
+#data by grid 
 dass = st_as_sf(da,coords=c('X','Y'),crs=4326)
 dag = st_join(dass,gtot)
-
+daga = subset(dag,!is.na(GRID_NO))
+dagaa = aggregate(bottomT~LFA+GRID_NO+woy+yr,data=daga,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
+grra = merge(dagaa,gtot)
+saveRDS(grra,file='WeeklyTemp_by_grid_05-24.rds')
 
 
 ggplot(subset(ar,yr==2023),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
