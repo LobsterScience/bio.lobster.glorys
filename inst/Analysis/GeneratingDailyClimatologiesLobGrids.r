@@ -27,6 +27,7 @@ data_list <- lapply(paste('Summary',filtered_files,sep="/"), readRDS)
 da = bind_rows(data_list)
 da$yr = lubridate::year(da$Date)
 da$woy = lubridate::week(da$Date)
+da$doy = lubridate::yday(da$Date)
 save(da,file="GlorysTemps2005_2024.rds")
 load('GlorysTemps2005_2024.rds') 
 
@@ -35,13 +36,13 @@ filtered_files <- files
 data_list <- lapply(paste('Summary',filtered_files,sep="/"), readRDS)
 da = bind_rows(data_list)
 da$yr = lubridate::year(da$Date)
-da$woy = lubridate::week(da$Date)
+da$doy = lubridate::yday(da$Date)
 #weekly climatology 1994-2016
-daa = aggregate(bottomT~X+Y+woy,data=subset(da,yr<2017),FUN=mean)
+daa = aggregate(bottomT~X+Y+doy,data=subset(da,yr<2017),FUN=mean)
 names(daa)[4] = 'climT'
-saveRDS(daa,file='WeeklyClimatology1993_2016.rds')
+saveRDS(daa,file='DailyClimatology1993_2016.rds')
 
-daa = readRDS(file='WeeklyClimatology1993_2016.rds')
+daa = readRDS(file='DailyClimatology1993_2016.rds')
 das = st_as_sf(daa,coords=c('X','Y'),crs=4326)
 
 #lobstergrids
@@ -55,10 +56,10 @@ gtot = bind_rows(gr,gr41)
 dag = st_join(das,gtot)
 dags = subset(dag,!is.na(LFA) & !is.na(GRID_NO))
 
-dagA = aggregate(climT~LFA+GRID_NO+woy,data=dags,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
+dagA = aggregate(climT~LFA+GRID_NO+doy,data=dags,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
 grr = merge(dagA,gtot)
-saveRDS(grr,file='WeeklyClimatology1993_2016_byGrid.rds')
-grr =readRDS(file='WeeklyClimatology1993_2016_byGrid.rds')
+saveRDS(grr,file='DailyClimatology1993_2016_byGrid.rds')
+grr =readRDS(file='DailyClimatology1993_2016_byGrid.rds')
 grr$geometry <- NULL
 grr1 = grr[!duplicated(grr),]
 
@@ -66,41 +67,25 @@ grr1 = grr[!duplicated(grr),]
 dass = st_as_sf(da,coords=c('X','Y'),crs=4326)
 dag = st_join(dass,gtot)
 daga = subset(dag,!is.na(GRID_NO))
-dagaa = aggregate(bottomT~LFA+GRID_NO+woy+yr,data=daga,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
+dagaa = aggregate(bottomT~LFA+GRID_NO+doy+yr,data=daga,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
 grra = merge(dagaa,gtot)
-saveRDS(grra,file='WeeklyTemp_by_grid_05-24.rds')
-grra = st_as_sf(readRDS(file='WeeklyTemp_by_grid_05-24.rds'))
+saveRDS(grra,file='DailyTemp_by_grid_05-24.rds')
+grra = st_as_sf(readRDS(file='DailyTemp_by_grid_05-24.rds'))
 
 
 #merge clim and data by grid
 
-grb = merge(grra,grr1,by=c('LFA','GRID_NO','woy'))
+grb = merge(grra,grr1,by=c('LFA','GRID_NO','doy'))
 grb$Anomaly = grb$bottomT[,3] - grb$climT[,3]
-saveRDS(grb,file='WeeklyTemp_by_grid_05-24_withAnom.rds')
+saveRDS(grb,file='DailyTemp_by_grid_05-24_withAnom.rds')
 
-ggplot(subset(grb,yr==2023& woy %in% 10:16),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
+ggplot(subset(grb,yr==2023& doy %in% 10:16),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
   scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
   facet_wrap(~woy)+
   theme_test_adam()+
   labs(title=2024)
 
-
-require(ggplot2)
-ggplot(subset(rc2,yr==2023),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
-  scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
-  facet_wrap(~mn)+
-  theme_test_adam()+
-  labs(title=2023)
-
-
-ggplot(subset(rc2,yr==2024),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
-  scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+
-  facet_wrap(~mn)+
-  theme_test_adam()+
-  labs(title=2024)
 
 
 
