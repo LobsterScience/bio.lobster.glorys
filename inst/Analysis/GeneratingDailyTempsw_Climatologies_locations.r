@@ -5,6 +5,7 @@ require(dplyr)
 require(tidyr)
 require(sf)
 require(ggplot2)
+require(data.table)
 la()
 
 
@@ -48,10 +49,11 @@ daa = readRDS(file='DailyClimatology1993_2016.rds')
 daas = st_as_sf(daa,coords=c('X','Y'),crs=4326)
 
 
-#merge data with clim
-# Spatial join + filter by DOY
-joined <- das %>%
-  rowwise() %>%
-  mutate(match = list(daas[daas$doy == doy,][which.min(st_distance(geometry, daas$geometry))])) %>%
-  unnest(match)
+setDT(da)
+setDT(daa)
+
+dam = merge(da,daa,by=c('doy','X','Y'),all=T)
+dam = as.data.frame(dam)
+
+saveRDS(dam,file='GlorysTemps2000_24_wClim.rds')
 
