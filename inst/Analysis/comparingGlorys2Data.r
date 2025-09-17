@@ -222,6 +222,8 @@ or$ests = fitBias_t1$family$linkinv(v$est)
 
 plot(or$diff,or$ests)
 
+saveRDS(or,'dataForsdmTMBbiasSurface.rds')
+saveRDS(fitBias_t1,'modelForbiasSurface.rds')
 
 ###bias corrected surface
 
