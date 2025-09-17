@@ -13,7 +13,7 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-
+if(redo.comps){
 dam = readRDS(file='GlorysTemps2000_24_wClim.rds')
 
 da = lobster.db('temperature.data')
@@ -55,5 +55,191 @@ out[[i]] = j
 }
 
 oi = do.call(rbind,out)
-saveRDS(oi,'Data2GlorMerge.rds')
 
+oii = st_as_sf(oi,coords=c('LON_DD','LAT_DD'),crs=4326)
+oiu = st_transform(oii,crs=32620)
+st_geometry(oiu) = st_geometry(oiu)/1000
+st_crs(oiu) = 32620
+
+ba = readRDS('~/git/bio.lobster.data/mapping_data/bathymetrySF.rds')
+ba = ba %>% st_as_sf() 
+st_geometry(ba) = st_geometry(ba)/1000
+st_crs(ba) = 32620
+
+ss = st_nearest_feature(oiu,ba)
+ds = st_distance(oiu,ba[ss,],by_element=T)
+st_geometry(ba) = NULL
+oiu$z = ba$z[ss]
+oiu$z_dist = as.numeric(ds)
+
+oi = oiu
+saveRDS(oi,'Data2GlorMerge.rds')
+}
+
+oi = readRDS('Data2GlorMerge.rds')
+ois = subset(oi,dist<quantile(dist,0.99) & !is.na(Glor) & TEMP<30 & TEMP> -2 & z>0) #<5ish km
+ois$YR = lubridate::year(ois$T_DATE)
+
+oisS = st_as_sf(ois,crs=32620)
+#ggplot(oisS)+geom_sf()
+
+
+rL = readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","LFAPolysSF.rds"))
+rL = st_as_sf(rL)
+st_crs(rL) <- 4326
+rll = st_bbox(rL)
+rll[3] = -62 #cropping polys
+rll = st_as_sfc(rll)
+rL = st_intersection(rL,rll)
+
+rL = st_transform(rL,32620) 
+st_geometry(rL) <- st_geometry(st_as_sf(rL$geometry/1000)) 
+st_crs(rL) <- 32620
+
+  or = st_join(oisS, rL)
+  or = subset(or,z<300 & !is.na(LFA))
+
+or$Q = lubridate::quarter(or$T_DATE)
+or$X1000 = st_coordinates(or)[,1]
+or$Y1000 = st_coordinates(or)[,2]
+
+or$diff = or$TEMP - or$Glor
+or = subset(or,abs(diff)<10)
+#ggplot() + geom_point(data=subset(or,Q %in% 3),aes(colour=diff,fill=diff,x=X1000,y=Y1000),size=.2)+facet_wrap(~YR)+
+#  scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#  scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#  theme_test_adam()
+
+#seeems to be biased low in summer and slightly high in winter. Coming up with a bias correction surface using DOY
+
+#circular year
+#or$doy = lubridate::yday(or$T_DATE)
+#or$sinDoy = sin(2*pi*or$doy/365)
+#or$cosDoy = cos(2*pi*or$doy/365)
+or$month = lubridate::month(or$T_DATE)
+or$lz = log(or$z)
+or$sinMon = sin(2*pi*or$month/12)
+or$cosMon = cos(2*pi*or$month/12)
+or$Q = lubridate::quarter(or$T_DATE)
+#or$sinQ = sin(2*pi*or$Q/4)
+#or$cosQ = cos(2*pi*or$Q/4)
+
+require(sdmTMB)
+ns_coast =readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","CoastSF.rds"))
+st_crs(ns_coast) <- 4326 # 'WGS84'; necessary on some installs
+crs_utm20 <- 32620
+ns_coast = st_make_valid(ns_coast)
+ns_coast <- suppressWarnings(suppressMessages(
+  st_crop(ns_coast,
+          c(xmin = -71, ymin = 41, xmax = -56.5, ymax = 47.5))))
+
+ns_coast <- st_transform(ns_coast, crs_utm20)
+
+spde <- make_mesh(as_tibble(or), xy_cols = c("X1000", "Y1000"),
+                  n_knots=500,type = "cutoff_search")
+#plot(spde)
+
+# Add on the barrier mesh component:
+bspde <- sdmTMBextra::add_barrier_mesh(
+  spde, ns_coast, range_fraction = 0.1,
+  proj_scaling = 1000, plot = TRUE
+)
+
+# fitBias_t = sdmTMB(diff~ s(lz,k=3)+Glor+sinMon+cosMon,
+#                     data=as_tibble(or),
+#                     mesh=bspde,
+#                     time='YR',
+#                     family=student(link='identity'),
+#                     spatial='on',
+#                     spatiotemporal='iid')
+# 
+# 
+# or$resids <- residuals(fitBias_t) # randomized quantile residuals
+# qqnorm(or1$resids)
+# qqline(or1$resids)
+# cAIC(fitBias_t) #316362
+# 
+# ggplot() + geom_point(data=subset(or1,Q %in% 3),aes(colour=resids,fill=resids,x=X1000,y=Y1000),size=.2)+facet_wrap(~YR)+
+#   scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#   scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#   theme_test_adam()
+# cAIC(fitBias_t) # 316362
+# #####################################################################################################################################
+# fitBias_t1 = sdmTMB(diff~ s(lz,k=3)+Glor,
+#                        spatial_varying = ~0+sinMon+cosMon,#seasonal cycle on month
+#                        data=as_tibble(or),
+#                        mesh=bspde,
+#                        time='YR',
+#                        family=student(link='identity'),
+#                        spatial='on',
+#                        spatiotemporal='iid')
+# or1 = subset(or,is.finite(resids))
+# qqnorm(or1$resids)
+# qqline(or1$resids)
+# 
+# cAIC(fitBias_t1) # 270964.2
+# 
+# v = predict(fitBias_t1,type = 'response')
+# 
+# ggplot() + geom_point(data=subset(or1,Q %in% 4),aes(colour=resids,fill=resids,x=X1000,y=Y1000),size=.2)+facet_wrap(~YR)+
+#   scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#   scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#   theme_test_adam()
+# 
+# 
+# ggplot() + geom_point(data=subset(v,Q %in% 3),aes(colour=est,fill=est,x=X1000,y=Y1000),size=.2)+facet_wrap(~YR)+
+#   scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#   scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+#   theme_test_adam()
+# 
+#  
+# 
+# or$ests = fitBias_svq_t1$family$linkinv(v$est)
+# 
+# plot(or$resids+or$diff,or$ests)
+#####################################################################################################################################
+fitBias_t1 = sdmTMB(diff~ s(lz,k=3)+Glor+sinMon+cosMon,
+                    spatial_varying = ~0+sinMon+cosMon,#seasonal cycle on month
+                    data=as_tibble(or),
+                    mesh=bspde,
+                    time='YR',
+                    family=student(link='identity'),
+                    spatial='on',
+                    spatiotemporal='iid')
+or$residuals = residuals(fitBias_t1)
+qqnorm(or$residuals)
+qqline(or$residuals)
+
+cAIC(fitBias_t1) # 270876.2
+ggplot() + geom_point(data=subset(or,Q %in% 1),aes(colour=residuals,fill=residuals,x=X1000,y=Y1000),size=.2)+facet_wrap(~YR)+
+  scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+  scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
+  theme_test_adam()
+
+
+v = predict(fitBias_t1,type = 'response')
+or$ests = fitBias_t1$family$linkinv(v$est)
+
+plot(or$diff,or$ests)
+
+
+###bias corrected surface
+
+dam = readRDS(file='GlorysTemps2000_24_wClim.rds')
+da = st_as_sf(dam,coords = c('X','Y'),crs=4326)
+dau = st_transform(da,crs=32620)
+xx= st_coordinates(dau)/1000
+dau$X1000 = xx[,1]
+dau$Y1000 = xx[,2]
+
+st_crs(dau) = 32620
+dam = st_as_sf(dau,coords=c('X1000','Y1000'),crs=32620)
+damR = st_join(dam, rL)
+ba = readRDS('~/git/bio.lobster.data/mapping_data/bathymetrySF.rds')
+ba = ba %>% st_as_sf() 
+st_geometry(ba) = st_geometry(ba)/1000
+st_crs(ba) = 32620
+ss = st_nearest_feature(damR,ba)
+ds = st_distance(damR,ba[ss,],by_element=T)
+st_geometry(ba) = NULL
+damR$z = ba$z[ss]
