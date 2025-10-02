@@ -116,6 +116,8 @@ or = subset(or,abs(diff)<10)
 #or$doy = lubridate::yday(or$T_DATE)
 #or$sinDoy = sin(2*pi*or$doy/365)
 #or$cosDoy = cos(2*pi*or$doy/365)
+or = readRDS('dataForsdmTMBbiasSurface.rds')
+
 or$month = lubridate::month(or$T_DATE)
 or$lz = log(or$z)
 or$sinMon = sin(2*pi*or$month/12)
@@ -225,8 +227,11 @@ plot(or$diff,or$ests)
 saveRDS(or,'dataForsdmTMBbiasSurface.rds')
 saveRDS(fitBias_t1,'modelForbiasSurface.rds')
 
-###bias corrected surface
+or = readRDS('dataForsdmTMBbiasSurface.rds')
+fb = readRDS('modelForbiasSurface.rds')
 
+
+###bias corrected surface
 dam = readRDS(file='GlorysTemps2000_24_wClim.rds')
 da = st_as_sf(dam,coords = c('X','Y'),crs=4326)
 dau = st_transform(da,crs=32620)
@@ -235,13 +240,123 @@ dau$X1000 = xx[,1]
 dau$Y1000 = xx[,2]
 
 st_crs(dau) = 32620
+st_geometry(dau) <- NULL
 dam = st_as_sf(dau,coords=c('X1000','Y1000'),crs=32620)
-damR = st_join(dam, rL)
+id = unique(dam$doy)
+rm(dau,da,xx)
 ba = readRDS('~/git/bio.lobster.data/mapping_data/bathymetrySF.rds')
-ba = ba %>% st_as_sf() 
+ba = ba %>% st_as_sf()
 st_geometry(ba) = st_geometry(ba)/1000
 st_crs(ba) = 32620
-ss = st_nearest_feature(damR,ba)
-ds = st_distance(damR,ba[ss,],by_element=T)
-st_geometry(ba) = NULL
-damR$z = ba$z[ss]
+ba1 = ba
+st_geometry(ba1) <- NULL
+out = list()
+for(i in 1:length(id)){
+	b = subset(dam,doy==id[i])
+	o = st_join(b,rL)
+        o = subset(o,!is.na(LFA))
+	ss = st_nearest_feature(o,ba)
+	o$z = ba1$z[ss]
+	out[[i]] = o
+}
+
+su = bind_rows(out)
+rm(out, dam, ba, ba1i,b)
+su$month = lubridate::month(su$Date)
+su = subset(su,z>0)
+su$lz = log(su$z)
+su$sinMon = sin(2*pi*su$month/12)
+su$cosMon = cos(2*pi*su$month/12)
+su$Q = lubridate::quarter(su$Date)
+su$YR = lubridate::year(su$Date)
+su$X1000 = st_coordinates(su)[,1]
+su$Y1000 = st_coordinates(su)[,2]
+su$Glor = su$bottomT
+
+#su = subset(su,YR %in% unique(or$YR))
+saveRDS(su,file='predictionSurfaces.rds')
+
+sun = as_tibble(su)
+years <- unique(su$YR)
+require(purrr)
+
+base_subsets <- map(1:200, function(i) {
+			    sun %>%
+				        group_by(YR) %>%
+					    slice_sample(n = 1, replace = TRUE) %>%
+					        ungroup()
+		    })
+
+# Step 2: Remove those sampled rows from the original data
+sampled_ids <- bind_rows(base_subsets) %>% distinct()
+remaining_df <- anti_join(sun, sampled_ids)
+
+# Step 3: Randomly distribute remaining rows across the 200 subsets
+remaining_split <- split(remaining_df, rep(1:200, length.out = nrow(remaining_df)))
+
+# Step 4: Combine base samples with remaining rows
+final_subsets <- map2(base_subsets, remaining_split, bind_rows)
+saveRDS(final_subsets,file='predictionSurfaces_list.rds')
+#####
+#run for predictions
+
+or = readRDS('dataForsdmTMBbiasSurface.rds')
+
+final_subsets = readRDS(file='predictionSurfaces_list.rds')
+or$month = lubridate::month(or$T_DATE)
+or$lz = log(or$z)
+or$sinMon = sin(2*pi*or$month/12)
+or$cosMon = cos(2*pi*or$month/12)
+or$Q = lubridate::quarter(or$T_DATE)
+#or$sinQ = sin(2*pi*or$Q/4)
+#or$cosQ = cos(2*pi*or$Q/4)
+
+require(sdmTMB)
+ns_coast =readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","CoastSF.rds"))
+st_crs(ns_coast) <- 4326 # 'WGS84'; necessary on some installs
+crs_utm20 <- 32620
+ns_coast = st_make_valid(ns_coast)
+ns_coast <- suppressWarnings(suppressMessages(
+					        st_crop(ns_coast,
+							          c(xmin = -71, ymin = 41, xmax = -56.5, ymax = 47.5))))
+
+ns_coast <- st_transform(ns_coast, crs_utm20)
+
+spde <- make_mesh(as_tibble(or), xy_cols = c("X1000", "Y1000"),
+		                    n_knots=500,type = "cutoff_search")
+#plot(spde)
+
+# Add on the barrier mesh component:
+bspde <- sdmTMBextra::add_barrier_mesh(
+				         spde, ns_coast, range_fraction = 0.1,
+					   proj_scaling = 1000, plot = TRUE
+					 )
+
+fitBias_t1 = sdmTMB(diff~ s(lz,k=3)+Glor+sinMon+cosMon,
+		                        spatial_varying = ~0+sinMon+cosMon,#seasonal cycle on month
+					                    data=as_tibble(or),
+					                    mesh=bspde,
+							                        time='YR',
+							                        family=student(link='identity'),
+										                    spatial='on',
+										                    spatiotemporal='iid')
+years = unique(or$YR)
+for(i in 1:length(final_subsets)) {
+	fs = final_subsets[[i]]
+	fs = subset(fs,!is.na(Glor) & YR %in% years)
+	g = predict(fitBias_t1,newdata=fs)
+	fs$pred = fitBias_t1$family$linkinv(g$est)
+	final_subsets[[i]] = fs
+	saveRDS(fs, file=paste0('biaspredictions',i,'.rds'))
+	rm(fs,g)
+}
+
+fi = list.files()
+fi = grep('biasp',fi, value=T)
+o = list()
+for(i in 1:length(fi)){
+	o[[i]] = readRDS(file=fi[i])
+}
+
+lo = bind_rows(o)
+saveRDS(lo,file='Glorys2000-2023wBiasCorrColumn.rds')
