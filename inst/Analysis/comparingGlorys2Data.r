@@ -275,11 +275,12 @@ su$Glor = su$bottomT
 
 #su = subset(su,YR %in% unique(or$YR))
 saveRDS(su,file='predictionSurfaces.rds')
-
+su = readRDS('predictionSurfaces.rds')
 sun = as_tibble(su)
 years <- unique(su$YR)
 require(purrr)
-
+sun$sinDoy = sin(2*pi*sun$doy/365)
+sun$cosDoy = cos(2*pi*sun$doy/365)
 base_subsets <- map(1:200, function(i) {
 			    sun %>%
 				        group_by(YR) %>%
@@ -296,18 +297,18 @@ remaining_split <- split(remaining_df, rep(1:200, length.out = nrow(remaining_df
 
 # Step 4: Combine base samples with remaining rows
 final_subsets <- map2(base_subsets, remaining_split, bind_rows)
-saveRDS(final_subsets,file='predictionSurfaces_list.rds')
+saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')
+
 #####
 #run for predictions
 
 or = readRDS('dataForsdmTMBbiasSurface.rds')
 
-final_subsets = readRDS(file='predictionSurfaces_list.rds')
-or$month = lubridate::month(or$T_DATE)
+final_subsets = readRDS(file='predictionSurfaces_list_doy.rds')
+or$Doy = lubridate::yday(or$T_DATE)
 or$lz = log(or$z)
-or$sinMon = sin(2*pi*or$month/12)
-or$cosMon = cos(2*pi*or$month/12)
-or$Q = lubridate::quarter(or$T_DATE)
+or$sinDoy = sin(2*pi*or$Doy/365)
+or$cosDoy = cos(2*pi*or$Doy/365)
 #or$sinQ = sin(2*pi*or$Q/4)
 #or$cosQ = cos(2*pi*or$Q/4)
 
@@ -332,8 +333,8 @@ bspde <- sdmTMBextra::add_barrier_mesh(
 					   proj_scaling = 1000, plot = TRUE
 					 )
 
-fitBias_t1 = sdmTMB(diff~ s(lz,k=3)+Glor+sinMon+cosMon,
-		                        spatial_varying = ~0+sinMon+cosMon,#seasonal cycle on month
+fitBias_t1 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
+		                        spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
 					                    data=as_tibble(or),
 					                    mesh=bspde,
 							                        time='YR',
@@ -359,4 +360,4 @@ for(i in 1:length(fi)){
 }
 
 lo = bind_rows(o)
-saveRDS(lo,file='Glorys2000-2023wBiasCorrColumn.rds')
+saveRDS(lo,file='Glorys2000-2023wBiasCorrColumn_doy.rds')
