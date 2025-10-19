@@ -59,9 +59,9 @@ dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 
 dmi = list()
 dmx = list()
-os = 19950101
-oe = 19951231
-yrs = 2003-1995+1
+os = 20160101
+oe = 20161231
+yrs = 2024-2016+1
 for(i in 1:yrs){
   if(i==1) {
     dmi[[i]]=ymd(os)
@@ -100,8 +100,8 @@ dataset_id = "cmems_mod_glo_phy_myint_0.083deg_P1D-m"
 dmi = list()
 dmx = list()
 os = 20210101
-oe = 20241231
-yrs = 4
+oe = 20251231
+yrs = 5
 for(i in 1:yrs){
   if(i==1) {
     dmi[[i]]=ymd(os)
@@ -112,7 +112,7 @@ for(i in 1:yrs){
   }
 }
 dmi[[1]] = ymd(20210701)
-dmx[[yrs]] = ymd(20241022)
+dmx[[yrs]] = ymd(20250915)
 
 
 #now loop through commands
