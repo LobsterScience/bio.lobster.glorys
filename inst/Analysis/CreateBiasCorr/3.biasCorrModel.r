@@ -15,10 +15,7 @@ setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
 or = readRDS('dataForsdmTMBbiasSurface.rds')
 
-or$Doy = lubridate::yday(or$T_DATE)
 or$lz = log(or$z)
-or$sinDoy = sin(2*pi*or$Doy/365)
-or$cosDoy = cos(2*pi*or$Doy/365)
 
 ns_coast =readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","CoastSF.rds"))
 st_crs(ns_coast) <- 4326 # 'WGS84'; necessary on some installs
@@ -64,6 +61,35 @@ or$ests = fitBias_t1$family$linkinv(v$est)
 
 plot(or$diff,or$ests)
 
-saveRDS(or,'dataForsdmTMBbiasSurface.rds')
+saveRDS(or,'dataForsdmTMBbiasSurface_ann.rds')
+
+fitBias_t2 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
+	            spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
+	            data=as_tibble(or),
+	            mesh=bspde,
+	            time='YR',
+	            family=student(link='identity'),
+	            spatial='on',
+	            spatiotemporal='AR1')
+
+v = predict(fitBias_t2,type = 'response')
+or$ests2 = fitBias_t2$family$linkinv(v$est)
+
+plot(or$diff,or$ests)
+
+saveRDS(or,'dataForsdmTMBbiasSurface_ann_2.rds')
+
+fitBias_t3 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
+	             spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
+	             data=as_tibble(or),
+	              mesh=bspde,
+	               #time='YR',
+	               family=student(link='identity'),
+	               spatial='on')
+
+v = predict(fitBias_t3,type = 'response')
+or$ests3 = fitBias_t3$family$linkinv(v$est)
+
+saveRDS(or,'dataForsdmTMBbiasSurface_ann_3.rds')
 
 
