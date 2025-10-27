@@ -29,8 +29,8 @@ da = bind_rows(data_list)
 da$yr = lubridate::year(da$Date)
 da$woy = lubridate::week(da$Date)
 da$doy = lubridate::yday(da$Date)
-saveRDS(da,file="GlorysTemps2000_2024.rds")
-da = readRDS('GlorysTemps2000_2024.rds') 
+saveRDS(da,file="GlorysTemps2000_2025.rds")
+da = readRDS('GlorysTemps2000_2025.rds') 
 das = st_as_sf(da,coords=c('X','Y'),crs=4326)
 
 if(redo.clim){
@@ -56,4 +56,4 @@ dam = merge(da,daa,by=c('doy','X','Y'),all=T)
 dam = as.data.frame(dam)
 
 saveRDS(dam,file='GlorysTemps2000_24_wClim.rds')
-
+:

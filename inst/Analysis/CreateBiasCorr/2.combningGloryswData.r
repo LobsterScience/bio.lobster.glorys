@@ -13,7 +13,7 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-dam = readRDS(file='GlorysTemps2000_24_wClim.rds')
+dam = readRDS(file='GlorysTemps2000_2025.rds')
 
 da = lobster.db('temperature.data')
 da$T_DATE = format(da$T_DATE,'%Y-%m-%d')
@@ -30,14 +30,14 @@ daca$TEMP = daca$Temp
 
 dm = rbind(daca[,c('T_DATE','LON_DD','LAT_DD','TEMP')],daa[,c('T_DATE','LON_DD','LAT_DD','TEMP')])
 
-dm = subset(dm,lubridate::year(T_DATE) %in% 2000:2023)
+dm = subset(dm,lubridate::year(T_DATE) %in% 2000:2025)
 
 dt = unique(dm$T_DATE)
 out = list()
 for(i in 1:length(dt)) {
 if(i %in% seq(1,length(dt),by=10)) print(paste(Sys.Date(),i))
 j = subset(dm,T_DATE==dt[i])
-j$clim = NA
+#j$clim = NA
 j$Glor = NA
 j$dist = NA
 k = subset(dam,Date==dt[i])
@@ -47,7 +47,7 @@ ks = st_as_sf(k,coords=c('X','Y'),crs=4326)
 	for(l in 1:nrow(j)){
 	b = st_nearest_feature(js[l,],ks)
 	j[l,'dist'] = st_distance(js[l,],ks[b,])
-	j[l,'clim'] = ks[b,'climT']
+#	j[l,'clim'] = ks[b,'climT']
 	j[l,'Glor'] = ks[b,'bottomT']
 }
 out[[i]] = j
@@ -73,12 +73,11 @@ oiu$z_dist = as.numeric(ds)
 
 oi = oiu
 saveRDS(oi,'Data2GlorMerge.rds')
-}
+
 
 oi = readRDS('Data2GlorMerge.rds')
-ois = subset(oi,dist<quantile(dist,0.99) & !is.na(Glor) & TEMP<30 & TEMP> -2 & z>0) #<5ish km
+ois = subset(oi,!is.na(dist) &dist<quantile(dist,0.99,na.rm=T) & !is.na(Glor) & TEMP<30 & TEMP> -2 & z>0) #<5ish km
 ois$YR = lubridate::year(ois$T_DATE)
-
 oisS = st_as_sf(ois,crs=32620)
 #ggplot(oisS)+geom_sf()
 
