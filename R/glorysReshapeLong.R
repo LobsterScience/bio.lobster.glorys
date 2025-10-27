@@ -3,11 +3,13 @@ glorysReshapeLong <- function(glorysfile=file.path(project.datadirectory('bio.lo
 				require(satin)
 				require(dplyr) 
 				options(stringsAsFactors=F)
-
 				y1 = read.cmems(glorysfile)
 				nL = length(y1)	
-
+        if(nL==1){ 
+          x1 = y1
+        } else {
 				x1 = y1[[1]]
+        }
 				nlats = length(x1@lat)
 				nlons = length(x1@lon)
 				g = expand.grid(x1@lon,x1@lat)
@@ -20,7 +22,11 @@ glorysReshapeLong <- function(glorysfile=file.path(project.datadirectory('bio.lo
 				a1 = list()
 		for(i in 1:nL){
 				out = list()
-				x = y1[[i]]
+				if(nL==1){ 
+				  x1 = y1
+				} else {
+				  x = y1[[i]]
+				}
 				na = x@attribs$title
 					for(j in 1:nrow(g)){
 						u = g[j,]
