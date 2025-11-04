@@ -16,7 +16,7 @@ setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
 ###bias corrected surface
 
-dam = readRDS(file='GlorysTemps2000_24_wClim.rds')
+dam = readRDS(file='GlorysTemps2000_25_wClim.rds')
 da = st_as_sf(dam,coords = c('X','Y'),crs=4326)
 dau = st_transform(da,crs=32620)
 xx= st_coordinates(dau)/1000
@@ -82,7 +82,7 @@ years = unique(or$YR)
 for(i in 1:length(final_subsets)) {
 	fs = final_subsets[[i]]
 	fs = subset(fs,!is.na(Glor) & YR %in% years)
-	g = predict(fitBias_t1,newdata=fs)
+	g = predict(fitBias_t2,newdata=fs)
 	fs$pred = fitBias_t1$family$linkinv(g$est)
 	final_subsets[[i]] = fs
 	saveRDS(fs, file=paste0('biaspredictions',i,'.rds'))
@@ -98,4 +98,4 @@ for(i in 1:length(fi)){
 }
 
 lo = bind_rows(o)
-saveRDS(lo,file='Glorys2000-2023wBiasCorrColumn_doy.rds')
+saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy.rds')

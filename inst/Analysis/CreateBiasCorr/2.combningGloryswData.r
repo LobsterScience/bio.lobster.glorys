@@ -13,7 +13,7 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-dam = readRDS(file='GlorysTemps2000_2025.rds')
+dam = readRDS(file='GlorysTemps_Depth2000_2025.rds')
 
 da = lobster.db('temperature.data')
 da$T_DATE = format(da$T_DATE,'%Y-%m-%d')

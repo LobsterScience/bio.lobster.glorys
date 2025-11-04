@@ -38,8 +38,8 @@ bspde <- sdmTMBextra::add_barrier_mesh(
 					 )
 
 fitBias_t1 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
-		                        spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
-					                    data=as_tibble(or),
+                        spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
+                    data=as_tibble(or),
 					                    mesh=bspde,
 							                        time='YR',
 							                        family=student(link='identity'),
