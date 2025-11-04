@@ -11,7 +11,7 @@ outdir = getwd()
 # ================ Variables for your query ================
 
 # Dataset ID
-dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
+dataset_id = "cmems_mod_glo_phy_myint_0.083deg_P1D-m"
 
 # Ocean Variable(s)
 # Please keep the space at the beginning
@@ -19,8 +19,8 @@ dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 variable <- c(" --variable so --variable bottomT")
 
 # Time range
-date_min = ymd(19940101) # start_date
-date_max = ymd(19941231) # end_date
+date_min = ymd(20240101) # start_date
+date_max = ymd(20241231) # end_date
 
 # Geographic area and depth level 
 lon = list(-70, -58)  # lon_min, lon_max
@@ -31,11 +31,13 @@ depth = list(0.4941, .4941) # depth_min, depth_max
 
 # Output filename    
 filename = paste("GLORYS",date_min,".nc", sep="")
+reticulate::virtualenv_create(envname = "CopernicusMarine")
+reticulate::virtualenv_install("CopernicusMarine", packages = c("copernicusmarine"))
 
 # Toolbox command
 
 path_copernicusmarine = "C:\\Users\\Cooka\\Documents\\.virtualenvs\\CopernicusMarine\\Scripts\\copernicusmarine.exe"
-
+#if need to update program 
 
 ####single
 command <- paste (path_copernicusmarine, " subset -i", dataset_id,                    
@@ -44,7 +46,7 @@ command <- paste (path_copernicusmarine, " subset -i", dataset_id,
                 "-t", date_min, "-T", date_max,
                 "-z", depth[1], "-Z", depth[2],                    
                 variable, "-o", outdir, "-f", filename, 
-                "--force-download", sep = " ")
+                "--force-download --username AAA --password PPP",  sep = " ")
 
 print(paste("======== Download starting on",date_min,"========"))
 print(command)
