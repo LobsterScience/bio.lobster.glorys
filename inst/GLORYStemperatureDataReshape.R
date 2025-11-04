@@ -3,6 +3,7 @@ require(bio.lobster)
 require(bio.lobster.glorys)
 require(satin)
 require(tidyr)
+load_all("~/git/bio.lobster.glorys")
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 fil = dir('Downloads')
@@ -12,7 +13,7 @@ image(a@lon, a@lat, t(a@data[,,300,]))
 
 #glorys reshape to r Object
 
-for(i in 30:length(fil)){
+for(i in 2:length(fil)){
 		g = glorysReshapeLong(glorysfile=file.path('Downloads',fil[i]))
 		saveRDS(g,file = file.path('Summary',paste(fil[i],'ShelfBoF.rds',sep="_")))
 		print(fil[i])
