@@ -55,5 +55,4 @@ setDT(daa)
 dam = merge(da,daa,by=c('doy','X','Y'),all=T)
 dam = as.data.frame(dam)
 
-saveRDS(dam,file='GlorysTemps2000_24_wClim.rds')
-:
+saveRDS(dam,file='GlorysTemps2000_25_wClim.rds')

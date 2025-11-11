@@ -15,47 +15,22 @@ setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
 
 ###bias corrected surface
+redoList = F
+if(redoList){
+dam = readRDS('GlorysTemps_Depth2000_2025.rds') 
+dam = st_transform(dam,crs=32620)
+xx= st_coordinates(dam)/1000
+dam$X1000 = xx[,1]
+dam$Y1000 = xx[,2]
+st_crs(dam) = 32620
+st_geometry(dam) <- NULL
+dam = subset(dam,z>0)
+dam$lz = log(dam$z)
+dam$YR = dam$yr
+dam$Glor = dam$bottomT
 
-dam = readRDS(file='GlorysTemps2000_25_wClim.rds')
-da = st_as_sf(dam,coords = c('X','Y'),crs=4326)
-dau = st_transform(da,crs=32620)
-xx= st_coordinates(dau)/1000
-dau$X1000 = xx[,1]
-dau$Y1000 = xx[,2]
-
-st_crs(dau) = 32620
-st_geometry(dau) <- NULL
-dam = st_as_sf(dau,coords=c('X1000','Y1000'),crs=32620)
-id = unique(dam$doy)
-rm(dau,da,xx)
-ba = readRDS('~/git/bio.lobster.data/mapping_data/bathymetrySF.rds')
-ba = ba %>% st_as_sf()
-st_geometry(ba) = st_geometry(ba)/1000
-st_crs(ba) = 32620
-ba1 = ba
-st_geometry(ba1) <- NULL
-out = list()
-for(i in 1:length(id)){
-	b = subset(dam,doy==id[i])
-	o = st_join(b,rL)
-        o = subset(o,!is.na(LFA))
-	ss = st_nearest_feature(o,ba)
-	o$z = ba1$z[ss]
-	out[[i]] = o
-}
-
-su = bind_rows(out)
-rm(out, dam, ba, ba1i,b)
-su$month = lubridate::month(su$Date)
-su = subset(su,z>0)
-su$lz = log(su$z)
-su$YR = lubridate::year(su$Date)
-su$X1000 = st_coordinates(su)[,1]
-su$Y1000 = st_coordinates(su)[,2]
-su$Glor = su$bottomT
-
-sun = as_tibble(su)
-years <- unique(su$YR)
+sun = as_tibble(dam)
+years <- unique(sun$YR)
 
 require(purrr)
 sun$sinDoy = sin(2*pi*sun$doy/365)
@@ -76,14 +51,20 @@ remaining_split <- split(remaining_df, rep(1:200, length.out = nrow(remaining_df
 
 # Step 4: Combine base samples with remaining rows
 final_subsets <- map2(base_subsets, remaining_split, bind_rows)
-saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')
+saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')}
+final_subsets = readRDS('predictionSurfaces_list_doy.rds')
+#read model outputs
+
+t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
+or = t[[2]]
+m4 = t[[1]]
 
 years = unique(or$YR)
 for(i in 1:length(final_subsets)) {
 	fs = final_subsets[[i]]
 	fs = subset(fs,!is.na(Glor) & YR %in% years)
-	g = predict(fitBias_t2,newdata=fs)
-	fs$pred = fitBias_t1$family$linkinv(g$est)
+	g = predict(m4,newdata=fs)
+	fs$pred = m4$family$linkinv(g$est)
 	final_subsets[[i]] = fs
 	saveRDS(fs, file=paste0('biaspredictions',i,'.rds'))
 	rm(fs,g)

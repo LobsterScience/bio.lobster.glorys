@@ -109,4 +109,5 @@ or$sinDoy = sin(2*pi*or$doy/365)
 or$cosDoy = cos(2*pi*or$doy/365)
 saveRDS(or,'dataForsdmTMBbiasSurface.rds')
 
+#or = readRDS('dataForsdmTMBbiasSurface.rds')
 
