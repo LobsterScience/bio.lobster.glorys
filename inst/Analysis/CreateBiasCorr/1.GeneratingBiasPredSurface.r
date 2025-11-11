@@ -58,10 +58,9 @@ ui$geometry <- NULL
 
 dau = merge(da,ui)
 saveRDS(dau,'GlorysTemps_Depth2000_2025.rds')
-
 #       
-
-
+da = readRDS('GlorysTemps_Depth2000_2025.rds') 
+dz = aggregate(z~LFA+GRID_NO,data=da,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
 
 daa = readRDS(file='DailyClimatology1993_2016.rds')
 das = st_as_sf(daa,coords=c('X','Y'),crs=4326)
@@ -125,7 +124,22 @@ grb = merge(grra,grr1,by=c('LFA','GRID_NO','doy'))
 grb$Anomaly = grb$bottomT[,3] - grb$climT[,3]
 saveRDS(grb,file='DailyTemp_by_grid_00-25_withAnom.rds')
 
+#depth by grid
+da = readRDS('GlorysTemps_Depth2000_2025.rds')
+da = subset(da,doy==1 & yr==2021)
+gr = readRDS(file.path(git.repo,'bio.lobster.data','mapping_data','GridPolys_DepthPruned_37Split.rds'))
+gr41 = st_as_sf(readRDS(file.path(git.repo,'bio.lobster.data','mapping_data','LFA41_grid_polys.rds')))
+gr$GRID_NO = as.numeric(gr$GRID_NO)
+gr41$LFA = as.character(gr41$LFA)
+gtot = bind_rows(gr,gr41)
+dag = st_join(da,gtot)
+dags = subset(dag,!is.na(LFA) & !is.na(GRID_NO))
 
+dz = aggregate(z~LFA+GRID_NO,data=dags,FUN=function(x) c(mean(x),sd(x)))
+grb = readRDS(file='DailyTemp_by_grid_00-25_withAnom.rds')
+
+gz = merge(grb,dz,all.x=T)
+saveRDS(gz,file='DailyTemp_by_grid_00-25_withAnom_depth.rds')
 
 ggplot(subset(grb,yr==2023& doy %in% 10:16),aes(fill=Anomaly,colour=Anomaly))+geom_sf(size=1)+
   scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)+

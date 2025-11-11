@@ -53,7 +53,7 @@ dir.create(path,recursive = T)
 source(('~/git/Framework33_34_41/SpatialModelling/setupMultimodelTable.r'))
 source(file.path('~/git/Framework_LFA33_34_41/SpatialModelling/setupMultimodelTable.r'))
 
-models = c('m1','m2','m3','m4','m5')
+models = c('m1','m2','m3','m4','m5','m6','m7')
 ################################################################################################################################
 if('m1' %in% models){
   mod.label <- "m1" 
@@ -236,4 +236,34 @@ if('m6' %in% models){
 }
 
 ################################################################################################################################
--#
+mod.select=readRDS(mod.select,file=file.path(path,'model_selection.rds'))
+if('m7' %in% models){
+	  mod.label <- "m7"
+
+  m = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
+	                  spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
+			               data=as_tibble(or1),
+			               mesh=bspde,
+				                    time='YR',
+				                    family=gaussian(link='identity'),
+						                 spatial='on',
+						                 spatiotemporal='ar1')
+    m_cv <- sdmTMB_cv(
+		          diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
+			      spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
+			      data=as_tibble(or1),
+			          mesh=bspde,
+			          time='YR',
+				      family=gaussian(link='identity'),
+				      spatial='on',
+				          spatiotemporal='ar1',
+				          fold_ids='fold_id',
+					      k_folds = 5
+					    )
+    m7 = m
+      ca <-mod.select.fn()
+      mod.select <- rbind(mod.select, ca)
+        saveRDS(m,file=file.path(path,paste0('biasCorr_',mod.label,'.rds')))
+        saveRDS(mod.select,file=file.path(path,'model_selection.rds'))
+}
+
