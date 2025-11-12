@@ -80,3 +80,54 @@ for(i in 1:length(fi)){
 
 lo = bind_rows(o)
 saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy.rds')
+lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy.rds')
+
+
+#allocate bias corrs to grids
+gr = readRDS(file.path(git.repo,'bio.lobster.data','mapping_data','GridPolys_DepthPruned_37Split.rds'))
+gr41 = st_as_sf(readRDS(file.path(git.repo,'bio.lobster.data','mapping_data','LFA41_grid_polys.rds')))
+gr$GRID_NO = as.numeric(gr$GRID_NO)
+gr41$LFA = as.character(gr41$LFA)
+gtot = bind_rows(gr,gr41)
+gtot = st_transform(gtot,crs=32620)
+
+#data by grid
+
+dass = st_as_sf(lo)
+
+st_agr(dass) <- "constant"
+st_agr(gtot) <- "constant"
+# Break into chunks if needed
+chunk_size <- 10000
+n_chunks <- ceiling(nrow(dass) / chunk_size)
+
+# Initialize result list
+results <- vector("list", n_chunks)
+
+# Loop through chunks
+for (i in seq_len(n_chunks)) {
+	          cat("Processing chunk", i, "of", n_chunks, "\n")
+  idx <- ((i - 1) * chunk_size + 1):(min(i * chunk_size, nrow(dass)))
+      chunk <- dass[idx, ]
+
+      # Spatial join for the chunk
+      r <- st_join(chunk, gtot, join = st_within)
+          results[[i]] = subset(r,!is.na(GRID_NO))
+}
+
+# Combine results
+dag <- bind_rows(results)
+daa = subset(dag,!is.na(LFA))
+saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid.rds')
+daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid.rds')
+
+#or$diff = or$TEMP - or$Glor
+daa$bcT = daa$Glor+daa$pred
+
+daz = aggregate(z~LFA+GRID_NO,data=daa,FUN=function(x) c(mean(x,na.rm=T), sd(x,na.rm=T)))
+daT = aggregate(bcT~LFA+GRID_NO+doy+yr+Date,data=daa,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
+
+dazt = merge(daT,daz,all=T)
+saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg.rds')
+
+
