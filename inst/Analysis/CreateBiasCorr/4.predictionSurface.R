@@ -128,6 +128,8 @@ daz = aggregate(z~LFA+GRID_NO,data=daa,FUN=function(x) c(mean(x,na.rm=T), sd(x,n
 daT = aggregate(bcT~LFA+GRID_NO+doy+yr+Date,data=daa,FUN=function(x)quantile(x,c(0.025,0.25,0.5,0.75,0.975)))
 
 dazt = merge(daT,daz,all=T)
+i = which(dazt$bcT[,3]< -1.5)
+dazt$bcT[i,] <- NA
 saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg.rds')
 
 
