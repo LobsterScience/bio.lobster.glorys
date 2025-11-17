@@ -42,6 +42,7 @@ quarter_to_months <- function(q) {
 or$MN = unlist(lapply(or$Q,FUN=function(x) quarter_to_months(x)))
 
 or$Anomaly = or$diff
+hist(or$Anomaly)
 ggplot()+geom_sf(data=ns_coast)+geom_sf(data=subset(or),aes(fill=Anomaly,colour=Anomaly),size=.8)+
   scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
     scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
@@ -55,7 +56,7 @@ or$residuals = residuals(m4)
 qqnorm(or$residuals)
 qqline(or$residuals)
 
-ggplot()+geom_sf(data=ns_coast)+geom_sf(data=subset(or),aes(fill=residuals,colour=residuals),size=.8)+
+ggplot()+geom_sf(data=ns_coast)+geom_sf(data=subset(or),aes(fill=residuals,colour=residuals),size=1)+
   scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
   scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
   theme_test_adam()+facet_wrap(~as.factor(MN))
