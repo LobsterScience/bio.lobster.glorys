@@ -27,7 +27,7 @@ st_geometry(dam) <- NULL
 dam = subset(dam,z>0)
 dam$lz = log(dam$z)
 dam$YR = dam$yr
-dam$Glor = dam$bottomT
+	dam$Glor = dam$bottomT
 
 sun = as_tibble(dam)
 years <- unique(sun$YR)
@@ -51,11 +51,14 @@ remaining_split <- split(remaining_df, rep(1:200, length.out = nrow(remaining_df
 
 # Step 4: Combine base samples with remaining rows
 final_subsets <- map2(base_subsets, remaining_split, bind_rows)
-saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')}
+saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')
+
+}
 final_subsets = readRDS('predictionSurfaces_list_doy.rds')
 #read model outputs
+t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_may26.rds')))
 
-t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
+#t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
 or = t[[2]]
 m4 = t[[1]]
 
@@ -79,8 +82,8 @@ for(i in 1:length(fi)){
 }
 
 lo = bind_rows(o)
-saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy.rds')
-lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy.rds')
+saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy_may27.rds')
+lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy_may27.rds')
 
 
 #allocate bias corrs to grids
@@ -90,10 +93,11 @@ gr$GRID_NO = as.numeric(gr$GRID_NO)
 gr41$LFA = as.character(gr41$LFA)
 gtot = bind_rows(gr,gr41)
 gtot = st_transform(gtot,crs=32620)
-
+st_geometry(gtot) <- st_geometry(gtot)/1000
+st_crs(gtot) <- 32620
 #data by grid
 
-dass = st_as_sf(lo)
+dass = st_as_sf(lo, coords=c('X1000','Y1000'),crs=32620)
 
 st_agr(dass) <- "constant"
 st_agr(gtot) <- "constant"
@@ -118,8 +122,8 @@ for (i in seq_len(n_chunks)) {
 # Combine results
 dag <- bind_rows(results)
 daa = subset(dag,!is.na(LFA))
-saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid.rds')
-daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid.rds')
+saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid_may28.rds')
+daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid_may28.rds')
 
 #or$diff = or$TEMP - or$Glor
 daa$bcT = daa$Glor+daa$pred
@@ -130,6 +134,5 @@ daT = aggregate(bcT~LFA+GRID_NO+doy+yr+Date,data=daa,FUN=function(x)quantile(x,c
 dazt = merge(daT,daz,all=T)
 i = which(dazt$bcT[,3]< -1.5)
 dazt$bcT[i,] <- NA
-saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg.rds')
-
+saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg_may28.rds')
 

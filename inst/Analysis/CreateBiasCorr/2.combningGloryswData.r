@@ -6,6 +6,7 @@ require(tidyr)
 require(sf)
 require(ggplot2)
 require(data.table)
+require(RANN)
 la()
 
 
@@ -29,28 +30,70 @@ daca$TEMP = daca$Temp
 #daca$T_UID = paste('CW',seq(1:nrow(daca)),sep="-")
 
 dm = rbind(daca[,c('T_DATE','LON_DD','LAT_DD','TEMP')],daa[,c('T_DATE','LON_DD','LAT_DD','TEMP')])
-
+dm$T_DATE = as.Date(dm$T_DATE)
 dm = subset(dm,lubridate::year(T_DATE) %in% 2000:2025)
 
-dt = unique(dm$T_DATE)
-out = list()
-for(i in 1:length(dt)) {
-if(i %in% seq(1,length(dt),by=10)) print(paste(Sys.Date(),i))
-j = subset(dm,T_DATE==dt[i])
-#j$clim = NA
-j$Glor = NA
-j$dist = NA
-k = subset(dam,Date==dt[i])
+daT = lobster.db('trudel.temperature.data')
+daT$T_DATE = daT$date
+daT$LON_DD = daT$DEPLOY_LON_DD
+daT$LAT_DD = daT$DEPLOY_LAT_DD
+daT$TEMP = daT$day.mean.temp
 
-js = st_as_sf(j,coords=c('LON_DD','LAT_DD'),crs=4326)
-ks = st_as_sf(k,coords=c('X','Y'),crs=4326)
-	for(l in 1:nrow(j)){
-	b = st_nearest_feature(js[l,],ks)
-	j[l,'dist'] = st_distance(js[l,],ks[b,])
-#	j[l,'clim'] = ks[b,'climT']
-	j[l,'Glor'] = ks[b,'bottomT']
+dm = rbind(dm[,c('T_DATE','LON_DD','LAT_DD','TEMP')],daT[,c('T_DATE','LON_DD','LAT_DD','TEMP')])
+
+#split out years
+dm$y = lubridate::year(dm$T_DATE)
+dam$y = lubridate::year(dam$Date)
+dy = unique(dm$y)
+for(k in seq_along(dy)){
+	v = subset(dm,y == dy[k])
+
+	l = subset(dam,y==dy[k])
+	saveRDS(list(v,l), file=paste0('Gl_ob',dy[k],'.rds'))
 }
-out[[i]] = j
+
+v = dir()
+v = v[grep('Gl_ob',v)]
+
+for(i in 1:length(v)) {
+		b = readRDS(v[i])
+		b1 = b[[1]]
+		b2=b[[2]]
+
+		ud =unique(b1$T_DATE)
+		for(j in seq_along(ud)){
+
+			g = subset(b1,T_DATE==ud[j])
+#			g$clim = NA
+			g$Glor = NA
+			g$dist = NA
+			k = subset(b2,Date==ud[j])
+	
+js = st_as_sf(g,coords=c('LON_DD','LAT_DD'),crs=4326)
+ks = st_as_sf(k,crs=4326)
+
+	for(l in 1:nrow(g)){
+	b = st_nearest_feature(js[l,],ks)
+	g[l,'dist'] = st_distance(js[l,],ks[b,])
+#	g[l,'clim'] = ks[b,'climT']
+	g[l,'Glor'] = ks[b,'bottomT']
+}
+saveRDS(g,file=paste0('combGL_DA',ud[j],'.rds'))
+}
+rm(b)
+rm(b1)
+rm(b2)
+gc()
+}
+
+
+out = list()
+v = dir()
+v = v[grep('combGL_DA',v)]
+
+for(i in 1:length(v)){
+
+out[[i]] = readRDS(v[i])
 }
 
 oi = do.call(rbind,out)
@@ -70,12 +113,13 @@ ds = st_distance(oiu,ba[ss,],by_element=T)
 st_geometry(ba) = NULL
 oiu$z = ba$z[ss]
 oiu$z_dist = as.numeric(ds)
-
+oiu = subset(oiu,!is.na(Glor)&z>0& dist<quantile(dist,0.99,na.rm=T) & TEMP< 30 & TEMP> -2)
 oi = oiu
-saveRDS(oi,'Data2GlorMerge.rds')
+
+saveRDS(oi,'Data2GlorMerge_may212026.rds')
 
 
-oi = readRDS('Data2GlorMerge.rds')
+#oi = readRDS('Data2GlorMerge.rds')
 ois = subset(oi,!is.na(dist) &dist<quantile(dist,0.99,na.rm=T) & !is.na(Glor) & TEMP<30 & TEMP> -2 & z>0) #<5ish km
 ois$YR = lubridate::year(ois$T_DATE)
 oisS = st_as_sf(ois,crs=32620)
@@ -107,7 +151,7 @@ or = subset(or,abs(diff)<10)
 or$doy = lubridate::yday(or$T_DATE)
 or$sinDoy = sin(2*pi*or$doy/365)
 or$cosDoy = cos(2*pi*or$doy/365)
-saveRDS(or,'dataForsdmTMBbiasSurface.rds')
+saveRDS(or,'dataForsdmTMBbiasSurface_may162026.rds')
 
 #or = readRDS('dataForsdmTMBbiasSurface.rds')
 

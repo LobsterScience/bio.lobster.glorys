@@ -13,7 +13,10 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-or = readRDS('dataForsdmTMBbiasSurface.rds')
+#or = readRDS('dataForsdmTMBbiasSurface.rds')
+
+or = readRDS('dataForsdmTMBbiasSurface_may162026.rds')
+or = subset(or, z>5)
 
 or$lz = log(or$z)
 
@@ -48,12 +51,12 @@ or$Q = lubridate::quarter(or$T_DATE)
 or$IDS = "I"
 or1 = as_tibble(or)
 or1 = cv_SpaceTimeFolds(or1,idCol = 'IDS', nfolds=5)
-path=file.path('Model_outputs/models')
+path=file.path('Model_outputs/models_may25')
 dir.create(path,recursive = T)
 source(('~/git/Framework33_34_41/SpatialModelling/setupMultimodelTable.r'))
-source(file.path('~/git/Framework_LFA33_34_41/SpatialModelling/setupMultimodelTable.r'))
+#source(file.path('~/git/Framework_LFA33_34_41/SpatialModelling/setupMultimodelTable.r'))
 
-models = c('m1','m2','m3','m4','m5','m6','m7')
+models = c('m2','m3','m5','m6')
 ################################################################################################################################
 if('m1' %in% models){
   mod.label <- "m1" 

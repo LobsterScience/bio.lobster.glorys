@@ -13,10 +13,9 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-or = readRDS('dataForsdmTMBbiasSurface.rds')
-
+or = readRDS('dataForsdmTMBbiasSurface_may162026.rds')
+or = subset(or, z>5)
 or$lz = log(or$z)
-
 ns_coast =readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","CoastSF.rds"))
 st_crs(ns_coast) <- 4326 # 'WGS84'; necessary on some installs
 crs_utm20 <- 32620
@@ -39,16 +38,16 @@ bspde <- sdmTMBextra::add_barrier_mesh(
 
 
 #chosen from 3.biasCorrMultModel.r
+or1 =  as_tibble(or)
 
-  m4 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
-             spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
-             data=as_tibble(or),
+  m5 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
+             data=or1,
              mesh=bspde,
              time='YR',
              family=student(link='identity'),
              spatial='on',
              spatiotemporal='ar1')
-#or$residuals = residuals(m4)
+or$residuals = residuals(m5)
 #qqnorm(or$residuals)
 #qqline(or$residuals)
 
@@ -58,9 +57,9 @@ bspde <- sdmTMBextra::add_barrier_mesh(
 #  theme_test_adam()
 
 
-v = predict(m4,type = 'response')
-or$ests = m4$family$linkinv(v$est)
+v = predict(m5,type = 'response')
+or$ests = m5$family$linkinv(v$est)
 
-plot(or$diff,or$ests)
+#plot(or$diff,or$ests)
 
-saveRDS(list(m4,or),file=file.path(paste0('final_model_biasCorr_m4.rds')))
+saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_may26.rds')))
