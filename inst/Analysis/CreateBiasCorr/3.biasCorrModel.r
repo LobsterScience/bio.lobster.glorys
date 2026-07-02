@@ -27,7 +27,7 @@ ns_coast <- suppressWarnings(suppressMessages(
 ns_coast <- st_transform(ns_coast, crs_utm20)
 
 spde <- make_mesh(as_tibble(or), xy_cols = c("X1000", "Y1000"),
-		                    cutoff=24)
+		                    cutoff=40)
 #plot(spde)
 
 # Add on the barrier mesh component:
@@ -41,7 +41,8 @@ bspde <- sdmTMBextra::add_barrier_mesh(
 or1 =  as_tibble(or)
 
   m5 = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
-             data=or1,
+	     spatial_varying = ~0+sinDoy+cosDoy,#seasonal cycle on day
+	      data=or1,
              mesh=bspde,
              time='YR',
              family=student(link='identity'),
@@ -62,4 +63,4 @@ or$ests = m5$family$linkinv(v$est)
 
 #plot(or$diff,or$ests)
 
-saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_may26.rds')))
+saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))

@@ -32,7 +32,7 @@ ns_coast <- st_transform(ns_coast, crs_utm20)
 
 
 spde <- make_mesh(as_tibble(or), xy_cols = c("X1000", "Y1000"),
-		                    cutoff=24)
+		                    cutoff=40)
 #plot(spde)
 
 # Add on the barrier mesh component:
@@ -51,12 +51,12 @@ or$Q = lubridate::quarter(or$T_DATE)
 or$IDS = "I"
 or1 = as_tibble(or)
 or1 = cv_SpaceTimeFolds(or1,idCol = 'IDS', nfolds=5)
-path=file.path('Model_outputs/models_may25')
+path=file.path('Model_outputs/models_june4')
 dir.create(path,recursive = T)
 source(('~/git/Framework33_34_41/SpatialModelling/setupMultimodelTable.r'))
 #source(file.path('~/git/Framework_LFA33_34_41/SpatialModelling/setupMultimodelTable.r'))
-
-models = c('m2','m3','m5','m6')
+#source('~/git/bio.lobster.glorys/inst/Analysis/CreateBiasCorr/3.biasCorrMultModel.r')
+models = c('m1','m2','m3','m4','m5','m6')
 ################################################################################################################################
 if('m1' %in% models){
   mod.label <- "m1" 
@@ -66,7 +66,7 @@ if('m1' %in% models){
                       data=as_tibble(or1),
                       mesh=bspde,
                       time='YR',
-                      family=student(link='identity'),
+                      family=gaussian(link='identity'),
                       spatial='on',
                       spatiotemporal='ar1')
   
@@ -76,7 +76,9 @@ if('m1' %in% models){
     data=as_tibble(or1),
     mesh=bspde,
     time='YR',
-    family=student(link='identity'),
+#    family=gaussian(link='identity'),
+                      family=gaussian(link='identity'),
+     
     spatial='on',
     spatiotemporal='ar1',
     fold_ids='fold_id',
@@ -97,7 +99,7 @@ if('m2' %in% models){
              data=as_tibble(or1),
              mesh=bspde,
              time='YR',
-             family=student(link='identity'),
+             family=gaussian(link='identity'),
              spatial='on',
              spatiotemporal='iid')
   
@@ -106,7 +108,7 @@ if('m2' %in% models){
     data=as_tibble(or1),
     mesh=bspde,
     time='YR',
-    family=student(link='identity'),
+    family=gaussian(link='identity'),
     spatial='on',
     spatiotemporal='iid',
     fold_ids='fold_id',
@@ -128,14 +130,14 @@ if('m3' %in% models){
   m = sdmTMB(diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
              data=as_tibble(or1),
              mesh=bspde,
-             family=student(link='identity'),
+             family=gaussian(link='identity'),
              spatial='on',)
              
   m_cv <- sdmTMB_cv(
     diff~ s(lz,k=3)+Glor+sinDoy+cosDoy,
     data=as_tibble(or1),
     mesh=bspde,
-    family=student(link='identity'),
+    family=gaussian(link='identity'),
     spatial='on',
     fold_ids='fold_id',
     k_folds = 5
@@ -155,7 +157,7 @@ if('m4' %in% models){
              data=as_tibble(or1),
              mesh=bspde,
              time='YR',
-             family=student(link='identity'),
+             family=gaussian(link='identity'),
              spatial='on',
              spatiotemporal='ar1')
   
@@ -165,7 +167,7 @@ if('m4' %in% models){
     data=as_tibble(or1),
     mesh=bspde,
     time='YR',
-    family=student(link='identity'),
+    family=gaussian(link='identity'),
     spatial='on',
     spatiotemporal='ar1',
     fold_ids='fold_id',
@@ -186,7 +188,7 @@ if('m5' %in% models){
              data=as_tibble(or1),
              mesh=bspde,
              time='YR',
-             family=student(link='identity'),
+             family=gaussian(link='identity'),
              spatial='on',
              spatiotemporal='ar1')
   
@@ -195,7 +197,7 @@ if('m5' %in% models){
     data=as_tibble(or1),
     mesh=bspde,
     time='YR',
-    family=student(link='identity'),
+    family=gaussian(link='identity'),
     spatial='on',
     spatiotemporal='ar1',
     fold_ids='fold_id',
@@ -216,7 +218,7 @@ if('m6' %in% models){
 			               data=as_tibble(or1),
 			               mesh=bspde,
 				                    time='YR',
-				                    family=student(link='identity'),
+				                    family=gaussian(link='identity'),
 						                 spatial='on',
 						                 spatiotemporal='ar1')
   
@@ -225,7 +227,7 @@ if('m6' %in% models){
 			      data=as_tibble(or1),
 			          mesh=bspde,
 			          time='YR',
-				      family=student(link='identity'),
+				      family=gaussian(link='identity'),
 				      spatial='on',
 				          spatiotemporal='ar1',
 				          fold_ids='fold_id',
