@@ -56,7 +56,7 @@ saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')
 }
 final_subsets = readRDS('predictionSurfaces_list_doy.rds')
 #read model outputs
-t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_may26.rds')))
+t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))
 
 #t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
 or = t[[2]]
@@ -82,8 +82,8 @@ for(i in 1:length(fi)){
 }
 
 lo = bind_rows(o)
-saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy_may27.rds')
-lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy_may27.rds')
+saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy_june15.rds')
+lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy_june15.rds')
 
 
 #allocate bias corrs to grids
@@ -122,8 +122,8 @@ for (i in seq_len(n_chunks)) {
 # Combine results
 dag <- bind_rows(results)
 daa = subset(dag,!is.na(LFA))
-saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid_may28.rds')
-daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid_may28.rds')
+saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid_june15.rds')
+daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid_june15.rds')
 
 #or$diff = or$TEMP - or$Glor
 daa$bcT = daa$Glor+daa$pred
@@ -134,5 +134,5 @@ daT = aggregate(bcT~LFA+GRID_NO+doy+yr+Date,data=daa,FUN=function(x)quantile(x,c
 dazt = merge(daT,daz,all=T)
 i = which(dazt$bcT[,3]< -1.5)
 dazt$bcT[i,] <- NA
-saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg_may28.rds')
+saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg_june15.rds')
 
