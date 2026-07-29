@@ -27,7 +27,7 @@ ns_coast <- suppressWarnings(suppressMessages(
 ns_coast <- st_transform(ns_coast, crs_utm20)
 
 spde <- make_mesh(as_tibble(or), xy_cols = c("X1000", "Y1000"),
-		                    cutoff=40)
+		                    cutoff=10)#changed from 40 july 28
 #plot(spde)
 
 # Add on the barrier mesh component:
@@ -63,4 +63,4 @@ or$ests = m5$family$linkinv(v$est)
 
 #plot(or$diff,or$ests)
 
-saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))
+saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_july29.rds')))
