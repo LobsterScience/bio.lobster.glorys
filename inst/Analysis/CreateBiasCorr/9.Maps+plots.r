@@ -43,10 +43,11 @@ or$MN = unlist(lapply(or$Q,FUN=function(x) quarter_to_months(x)))
 
 or$Anomaly = or$diff
 hist(or$Anomaly)
+or$Months = factor(or$MN, levels=c('Jan-Mar','Apr-Jun','Jul-Sep','Oct-Dec'))
 ggplot()+geom_sf(data=ns_coast)+geom_sf(data=subset(or),aes(fill=Anomaly,colour=Anomaly),size=.8)+
   scale_fill_gradient2(low='blue',mid='white',high='red',midpoint=0) +
     scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0) +
-    theme_test_adam()+facet_wrap(~as.factor(MN))
+    theme_test_adam()+facet_wrap(~Months)
 ggsave(file.path(fig_dir,'MapOfAnomlaies_by_month.png'))
 
 readRDS(file.path(project.datadirectory('bio.lobster.glorys'),'Model_outputs','models','model_selection.rds'))

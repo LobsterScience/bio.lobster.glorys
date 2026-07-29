@@ -20,9 +20,44 @@ if(redoList){
 dam = readRDS('GlorysTemps_Depth2000_2025.rds') 
 dam = st_transform(dam,crs=32620)
 xx= st_coordinates(dam)/1000
-dam$X1000 = xx[,1]
-dam$Y1000 = xx[,2]
+dam$X = xx[,1]
+dam$Y = xx[,2]
 st_crs(dam) = 32620
+
+locations_sf <- dam |>
+  dplyr::group_by(location_id) |>
+  dplyr::slice(1) |>
+  dplyr::ungroup()
+
+
+locations_df <- locations_sf |>
+  sf::st_transform(crs=32620) 
+
+sf::st_geometry(locations_df) =  sf::st_geometry(locations_df)/1000
+coords <- sf::st_coordinates(locations_df)
+
+locations_df <- locations_df |> 
+  sf::st_drop_geometry() |>
+  dplyr::mutate(
+    X = coords[, 1],
+    Y = coords[, 2]
+  )
+
+
+t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))
+
+#t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
+or = t[[2]]
+or$X = or$X1000
+or$Y = or$Y1000
+
+obs_xy <- as.matrix(locations_df[, c("X", "Y")])
+
+pred_xy <- as.matrix(or[, c("X", "Y")])
+
+nn <- FNN::get.knnx(pred_xy,obs_xy, k = 1)
+pred_grid <- locations_df[nn$nn.dist < 20, ]
+damr = subset(dam, location_id %in% pred_grid$location_id)
 st_geometry(dam) <- NULL
 dam = subset(dam,z>0)
 dam$lz = log(dam$z)
@@ -61,6 +96,10 @@ t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))
 #t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
 or = t[[2]]
 m4 = t[[1]]
+
+nn <- FNN::get.knnx(or, pred_xy, k = 1)
+
+pred_grid <- pred_grid[nn$nn.dist < 20000, ]
 
 years = unique(or$YR)
 for(i in 1:length(final_subsets)) {
