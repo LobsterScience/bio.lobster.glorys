@@ -44,27 +44,30 @@ locations_df <- locations_df |>
   )
 
 
-t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))
+t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_july29.rds')))
 
 #t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
 or = t[[2]]
 or$X = or$X1000
 or$Y = or$Y1000
+ors <-or
+st_geometry(ors) <- NULL
+obs_xy <-(locations_df[, c("X", "Y")])
+obs_xy = as.matrix(obs_xy)
+#reducing prediction grid to only points with 10km of observations 
 
-obs_xy <- as.matrix(locations_df[, c("X", "Y")])
+pred_xy <- (ors[, c("X", "Y")])
+pred_xy <- as.matrix(pred_xy)
+nn <- FNN::get.knnx(obs_xy,pred_xy, k = 1)
+ni = unique(nn$nn.index[nn$nn.dist <= 10] )
+damr = subset(dam, location_id %in% ni)
+st_geometry(damr) <- NULL
+damr = subset(damr,z>0)
+damr$lz = log(damr$z)
+damr$YR = damr$yr
+	damr$Glor = damr$bottomT
 
-pred_xy <- as.matrix(or[, c("X", "Y")])
-
-nn <- FNN::get.knnx(pred_xy,obs_xy, k = 1)
-pred_grid <- locations_df[nn$nn.dist < 20, ]
-damr = subset(dam, location_id %in% pred_grid$location_id)
-st_geometry(dam) <- NULL
-dam = subset(dam,z>0)
-dam$lz = log(dam$z)
-dam$YR = dam$yr
-	dam$Glor = dam$bottomT
-
-sun = as_tibble(dam)
+sun = as_tibble(damr)
 years <- unique(sun$YR)
 
 require(purrr)
@@ -91,19 +94,17 @@ saveRDS(final_subsets,file='predictionSurfaces_list_doy.rds')
 }
 final_subsets = readRDS('predictionSurfaces_list_doy.rds')
 #read model outputs
-t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_june10.rds')))
+t=readRDS(file=file.path(paste0('final_model_biasCorr_m5_july29.rds')))
 
 #t = readRDS(file=file.path(paste0('final_model_biasCorr_m4.rds')))
 or = t[[2]]
 m4 = t[[1]]
 
-nn <- FNN::get.knnx(or, pred_xy, k = 1)
-
-pred_grid <- pred_grid[nn$nn.dist < 20000, ]
-
 years = unique(or$YR)
 for(i in 1:length(final_subsets)) {
 	fs = final_subsets[[i]]
+fs$X1000 = fs$X
+fs$Y1000 = fs$Y
 	fs = subset(fs,!is.na(Glor) & YR %in% years)
 	g = predict(m4,newdata=fs)
 	fs$pred = m4$family$linkinv(g$est)
@@ -121,8 +122,8 @@ for(i in 1:length(fi)){
 }
 
 lo = bind_rows(o)
-saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy_june15.rds')
-lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy_june15.rds')
+saveRDS(lo,file='Glorys2000-2025wBiasCorrColumn_doy_july29.rds')
+lo = readRDS(file='Glorys2000-2025wBiasCorrColumn_doy_july29.rds')
 
 
 #allocate bias corrs to grids
@@ -161,8 +162,8 @@ for (i in seq_len(n_chunks)) {
 # Combine results
 dag <- bind_rows(results)
 daa = subset(dag,!is.na(LFA))
-saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid_june15.rds')
-daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid_june15.rds')
+saveRDS(daa,file='Glorys2000_2025wBiasCorrColumn_doy_grid_july29.rds')
+daa = readRDS(file='Glorys2000_2025wBiasCorrColumn_doy_grid_july29.rds')
 
 #or$diff = or$TEMP - or$Glor
 daa$bcT = daa$Glor+daa$pred
@@ -173,5 +174,5 @@ daT = aggregate(bcT~LFA+GRID_NO+doy+yr+Date,data=daa,FUN=function(x)quantile(x,c
 dazt = merge(daT,daz,all=T)
 i = which(dazt$bcT[,3]< -1.5)
 dazt$bcT[i,] <- NA
-saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg_june15.rds')
+saveRDS(dazt,file='Glorys2000_2025wBiasCorrColumn_doy_grid_agg_july29.rds')
 
