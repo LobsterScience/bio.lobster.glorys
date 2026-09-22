@@ -14,7 +14,7 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-dam = readRDS(file='GlorysTemps_Depth2000_2025.rds')
+dam = readRDS(file='GlorysTemps1994_2025.rds')
 
 da = lobster.db('temperature.data')
 da$T_DATE = format(da$T_DATE,'%Y-%m-%d')
@@ -31,7 +31,7 @@ daca$TEMP = daca$Temp
 
 dm = rbind(daca[,c('T_DATE','LON_DD','LAT_DD','TEMP')],daa[,c('T_DATE','LON_DD','LAT_DD','TEMP')])
 dm$T_DATE = as.Date(dm$T_DATE)
-dm = subset(dm,lubridate::year(T_DATE) %in% 2000:2025)
+dm = subset(dm,lubridate::year(T_DATE) %in% 1994:2025)
 
 daT = lobster.db('trudel.temperature.data')
 daT$T_DATE = daT$date
@@ -54,7 +54,7 @@ for(k in seq_along(dy)){
 
 v = dir()
 v = v[grep('Gl_ob',v)]
-
+#v = v[28:32]
 for(i in 1:length(v)) {
 		b = readRDS(v[i])
 		b1 = b[[1]]
@@ -70,7 +70,7 @@ for(i in 1:length(v)) {
 			k = subset(b2,Date==ud[j])
 	
 js = st_as_sf(g,coords=c('LON_DD','LAT_DD'),crs=4326)
-ks = st_as_sf(k,crs=4326)
+ks = st_as_sf(k,coords=c('X','Y'),crs=4326)
 
 	for(l in 1:nrow(g)){
 	b = st_nearest_feature(js[l,],ks)
@@ -116,7 +116,7 @@ oiu$z_dist = as.numeric(ds)
 oiu = subset(oiu,!is.na(Glor)&z>0& dist<quantile(dist,0.99,na.rm=T) & TEMP< 30 & TEMP> -2)
 oi = oiu
 
-saveRDS(oi,'Data2GlorMerge_may212026.rds')
+saveRDS(oi,'Data2GlorMerge_sept22026.rds')
 
 
 #oi = readRDS('Data2GlorMerge.rds')
@@ -151,7 +151,7 @@ or = subset(or,abs(diff)<10)
 or$doy = lubridate::yday(or$T_DATE)
 or$sinDoy = sin(2*pi*or$doy/365)
 or$cosDoy = cos(2*pi*or$doy/365)
-saveRDS(or,'dataForsdmTMBbiasSurface_may162026.rds')
+saveRDS(or,'dataForsdmTMBbiasSurface_sept22026.rds')
 
 #or = readRDS('dataForsdmTMBbiasSurface.rds')
 
