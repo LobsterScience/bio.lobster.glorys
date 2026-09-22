@@ -22,15 +22,15 @@ years <- as.numeric(sub("GLORYS(_int)?(\\d{4})-.*", "\\2", files))
 
 
 # Filter files from 2005 onward
-filtered_files <- files[years >= 2000]
+filtered_files <- files[years >=1994]
 # Read the filtered files into R
 data_list <- lapply(paste('Summary',filtered_files,sep="/"), readRDS)
 da = bind_rows(data_list)
 da$yr = lubridate::year(da$Date)
 da$woy = lubridate::week(da$Date)
 da$doy = lubridate::yday(da$Date)
-saveRDS(da,file="GlorysTemps2000_2025.rds")
-da = readRDS('GlorysTemps2000_2025.rds') 
+saveRDS(da,file="GlorysTemps1994_2025.rds")
+da = readRDS('GlorysTemps1994_2025.rds') 
 das = st_as_sf(da,coords=c('X','Y'),crs=4326)
 
 if(redo.clim){

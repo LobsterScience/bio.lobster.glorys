@@ -13,7 +13,7 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-or = readRDS('dataForsdmTMBbiasSurface_may162026.rds')
+or = readRDS('dataForsdmTMBbiasSurface_sept22026.rds')
 or = subset(or, z>5)
 or$lz = log(or$z)
 ns_coast =readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","CoastSF.rds"))
@@ -63,4 +63,4 @@ or$ests = m5$family$linkinv(v$est)
 
 #plot(or$diff,or$ests)
 
-saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_july29.rds')))
+saveRDS(list(m5,or),file=file.path(paste0('final_model_biasCorr_m5_sept2.rds')))
