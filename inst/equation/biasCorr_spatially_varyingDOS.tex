@@ -1,0 +1,37 @@
+\documentclass{article} 
+\usepackage{amsmath,amssymb} 
+	\begin{document} 
+\begin{equation} \begin{split} \mu_{i,t} =&\; \beta_0 + f(z_{i}) + \beta_1 \mathrm{GL12}_{i,t} \\ &+ \left[\beta_2+b_2(\mathbf{s}_i)\right] \sin\!\left(\frac{2\pi\,\mathrm{DOY}_{i,t}}{365}\right) \\ &+ \left[\beta_3+b_3(\mathbf{s}_i)\right] \cos\!\left(\frac{2\pi\,\mathrm{DOY}_{i,t}}{365}\right) \\ &+ \omega(\mathbf{s}_i) + \epsilon_t(\mathbf{s}_i), \end{split} \end{equation}
+ \begin{equation*} 
+  		\epsilon_t(\mathbf{s}) = \rho \, \epsilon_{t-1}(\mathbf{s}) + \sqrt{1-\rho^2}\,\eta_t(\mathbf{s}) 
+  \end{equation*} 
+  \begin{equation*} 
+  		\eta_t(\mathbf{s}) \sim \mathcal{GP}\!\left(0,\Sigma\right) 
+  \end{equation*} 
+  \begin{equation*} 
+  		y_{i,t} \sim t_{\nu}(\mu_{i,t},\sigma) 
+  \end{equation*}
+
+\paragraph{Definitions} 
+\begin{itemize} 
+	\item $y_{i,t}$ is the response variable, which is the difference between observations and \texttt{GL12} temperature at location $i$ and year $t$. 
+	\item $\beta_0$ is the intercept. 
+	\item $\beta_1$ is the fixed effect of \texttt{GL12} temperature. 
+	\item $z_{i}$ is the depth (in log space) at location $i$.
+	\item $\beta_2$ and $\beta_3$ are the population-level seasonal effects. 
+	\item $b_2(\mathbf{s}_i)$ and $b_3(\mathbf{s}_i)$ are spatially varying coefficients for the seasonal terms on day of year $DOY_{i,t}$. 
+	\item $\omega(\mathbf{s}_i)$ is the spatial Gaussian random field. 
+	\item $\epsilon_t(\mathbf{s})$ is the spatiotemporal random field at location $\mathbf{s}$ and time $t$. 
+	\item $\rho$ is the AR(1) temporal correlation parameter. 
+	\item $\eta_t(\mathbf{s})$ is the innovation spatial field, representing new spatial variation not explained by the spatiotemporal field in the previous time step.
+	\item $\mathcal{GP}(0,\Sigma)$ denotes a Gaussian process with mean zero and covariance matrix $\Sigma$. 
+	\item $\Sigma$ is the Mat\'ern covariance structure represented through the SPDE approximation.
+	\item $\sigma$ is the scale parameter of the Student-$t$ distribution. 
+	\item $\nu$ is the degrees-of-freedom parameter controlling tail heaviness.
+	\end{itemize} 
+	\paragraph{Methods}
+	 We modeled \texttt{D} using a spatial Gaussian mixed-effects model with an identity link. Fixed effects included \texttt{Glor}, $\sin(\mathrm{DOY})$, and $\cos(\mathrm{DOY})$. Spatially varying coefficients were estimated for the seasonal terms $\sin(\mathrm{DOY})$ and $\cos(\mathrm{DOY})$, allowing the magnitude and phase of seasonal patterns to vary geographically. A spatial Gaussian random field was included to account for residual spatial dependence, and a spatiotemporal random field with an AR(1) temporal structure was fitted across years using the SPDE approach. The Student-$t$ distribution was used to accommodate heavy-tailed residual variation and reduce sensitivity to outlying observations.
+
+ 
+
+\end{document}

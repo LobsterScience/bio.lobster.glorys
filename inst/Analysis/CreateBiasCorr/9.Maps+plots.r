@@ -53,6 +53,9 @@ ggsave(file.path(fig_dir,'MapOfAnomlaies_by_month.png'))
 readRDS(file.path(project.datadirectory('bio.lobster.glorys'),'Model_outputs','models','model_selection.rds'))
 #m4
 m4 = readRDS(file.path(project.datadirectory('bio.lobster.glorys'),'Model_outputs','models','biasCorr_m4.rds'))
+vr = readRDS(file=file.path(paste0('final_model_biasCorr_m5_july29.rds')))
+m4 = vr[[1]]
+or = vr[[2]]
 or$residuals = residuals(m4)
 qqnorm(or$residuals)
 qqline(or$residuals)
@@ -65,10 +68,13 @@ ggsave(file.path(fig_dir,'MapOfm4Residuals_by_month.png'))
 
 
 v = predict(m4,type = 'response')
-or$ests = m4$family$linkinv(v$est)
+or$ests1 = m4$family$linkinv(v$est)
 
-plot(or$diff,or$ests,xlab='Observed Differences',ylab='Model Estimates')
-ggsave(file.path(fig_dir,'m4Fits_by_obs.png'))
+ggplot(or,aes(x=diff,y=ests, colour=TEMP))+geom_point()+ 
+  geom_abline(slope=1,size=2)+labs(x='Observed - GL12',y = 'Model Predictions',colour='Observed T')+
+  theme_test(base_size = 14)
+
+ggsave('C:\\Users\\cooka\\OneDrive - DFO-MPO\\LFA33_34_41_Framework\\Documents\\Figures\\BiasCorrGlor\\comparison_glory_obs.png')
 
 
 
