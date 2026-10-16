@@ -63,7 +63,7 @@ dmi = list()
 dmx = list()
 os = 20160101
 oe = 20161231
-yrs = 2024-2016+1
+yrs = 2026-2016+1
 for(i in 1:yrs){
   if(i==1) {
     dmi[[i]]=ymd(os)
@@ -74,7 +74,7 @@ for(i in 1:yrs){
   }
 }
 #if date is early https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/download?dataset=cmems_mod_glo_phy_my_0.083deg_P1D-m_202311
-#dmx[[yrs]] = ymd(20210630)
+dmx[[yrs]] = ymd(20260825)
 
 
 #now loop through commands
@@ -96,14 +96,14 @@ print(paste("============= Download completed! ",i, sep=" "))
 
 #######################################################################################################################
 ###forecasts #updated Dec 2
-dataset_id = "cmems_mod_glo_phy_myint_0.083deg_P1D-m"
+dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 
 ##multiple 
 dmi = list()
 dmx = list()
 os = 20210101
-oe = 20251231
-yrs = 5
+oe = 20211231
+yrs = 6
 for(i in 1:yrs){
   if(i==1) {
     dmi[[i]]=ymd(os)
@@ -114,7 +114,7 @@ for(i in 1:yrs){
   }
 }
 dmi[[1]] = ymd(20210701)
-dmx[[yrs]] = ymd(20250915)
+dmx[[yrs]] = ymd(20260820)
 
 
 #now loop through commands
