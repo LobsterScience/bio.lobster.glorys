@@ -61,9 +61,9 @@ dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 
 dmi = list()
 dmx = list()
-os = 20160101
-oe = 20161231
-yrs = 2026-2016+1
+os = 19930101
+oe = 19931231
+yrs = 2026-1993+1
 for(i in 1:yrs){
   if(i==1) {
     dmi[[i]]=ymd(os)
@@ -92,44 +92,4 @@ for(i in 1:length(dmx)){
 print(command)
 system(command, intern = TRUE)
 print(paste("============= Download completed! ",i, sep=" "))
-}
-
-#######################################################################################################################
-###forecasts #updated Dec 2
-dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
-
-##multiple 
-dmi = list()
-dmx = list()
-os = 20210101
-oe = 20211231
-yrs = 6
-for(i in 1:yrs){
-  if(i==1) {
-    dmi[[i]]=ymd(os)
-    dmx[[i]] =ymd(oe)
-  } else {
-    dmi[[i]] = ymd(os + ((i-1)*10000))
-    dmx[[i]] = ymd(oe + ((i-1)*10000))
-  }
-}
-dmi[[1]] = ymd(20210701)
-dmx[[yrs]] = ymd(20260820)
-
-
-#now loop through commands
-for(i in 1:length(dmx)){
-  filename = paste("GLORYS_int",dmi[[i]],".nc", sep="")
-  
-  command <- paste (path_copernicusmarine, " subset -i", dataset_id,                    
-                    "-x", lon[1], "-X", lon[2],                  
-                    "-y", lat[1], "-Y", lat[2],
-                    "-t", dmi[[i]], "-T", dmx[[i]],
-                    "-z", depth[1], "-Z", depth[2],                    
-                    variable, "-o", outdir, "-f", filename, 
-                    "--force-download", sep = " ")
-  
-  print(command)
-  system(command, intern = TRUE)
-  print(paste("============= Download completed! ",i, sep=" "))
 }
