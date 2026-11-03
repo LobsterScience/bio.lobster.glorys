@@ -13,7 +13,7 @@ la()
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 
-or = readRDS('dataForsdmTMBbiasSurface_Oct192026.rds')
+or = readRDS('dataForsdmTMBbiasSurface_oct192026.rds')
 or = subset(or, depth>5)
 or$lz = log(or$depth)
 ns_coast =readRDS(file.path( project.datadirectory("bio.lobster"), "data","maps","CoastSF.rds"))
@@ -45,7 +45,7 @@ or1$YR = lubridate::year(or1$T_DATE)
 	      data=or1,
              mesh=bspde,
              time='YR',
-             family=student(link='identity'),
+             family=student(df=3,link='identity'),
              spatial='on',
              spatiotemporal='ar1')
 or$residuals = residuals(m5)

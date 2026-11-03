@@ -6,7 +6,7 @@ require(terra)
 require(dplyr)
 require(sf)
 load_all("~/git/bio.lobster.glorys")
-
+la()
 #locate glorys downloads
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
 fil = list.files(path = "Downloads", pattern = "^GLORYS.*\\.nc$", full.names = TRUE)
@@ -46,7 +46,7 @@ fil = list.files(path = "Downloads", pattern = "^GLORYS.*\\.nc$", full.names = T
       
       for (i in yr) {
         f <- grep(i, fil)
-        r <- rast(fil[f])
+        r <- rast(fil[f],subds='bottomT')
         dates <- as.Date(time(r))
         x <-subset(dm, year == i)
         
