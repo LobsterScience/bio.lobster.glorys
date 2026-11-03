@@ -1,12 +1,13 @@
 
 require(bio.lobster)
-require(bio.lobster.glorys)
+require(devtools)
 require(satin)
 require(tidyr)
 load_all("~/git/bio.lobster.glorys")
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys')))
-fil = dir('Downloads')
+fil = list.files(path = "Downloads", pattern = "^GLORYS.*\\.nc$", full.names = TRUE)
+
 y1 = read.cmems(file.path('Downloads',fil[3]))
 a = y1$bottomT
 image(a@lon, a@lat, t(a@data[,,300,]))

@@ -1,8 +1,14 @@
 # .R file to follow the article: How to download data via the Copernicus Marine Toolbox in R?
 
-# Please run install.packages("lubridate") is you have not already installed it
 library(lubridate)
 require(bio.lobster)
+
+#if first time or
+setup_virtualenv =F
+if(setup_virtualenv){
+reticulate::virtualenv_create(envname = "CopernicusMarine")
+reticulate::virtualenv_install("CopernicusMarine", packages = c("copernicusmarine"))
+}
 
 setwd(file.path(project.datadirectory('bio.lobster.glorys'),'Downloads')) # set work directory
 outdir = getwd()
@@ -10,12 +16,10 @@ outdir = getwd()
 
 # ================ Variables for your query ================
 
-# Dataset ID
-dataset_id = "cmems_mod_glo_phy_myint_0.083deg_P1D-m"
-
 # Ocean Variable(s)
 # Please keep the space at the beginning
 # To add another variable add " --variable your_var" after the last one 
+dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 variable <- c(" --variable so --variable bottomT")
 
 # Time range
@@ -31,8 +35,6 @@ depth = list(0.4941, .4941) # depth_min, depth_max
 
 # Output filename    
 filename = paste("GLORYS",date_min,".nc", sep="")
-reticulate::virtualenv_create(envname = "CopernicusMarine")
-reticulate::virtualenv_install("CopernicusMarine", packages = c("copernicusmarine"))
 
 # Toolbox command
 
@@ -46,18 +48,14 @@ command <- paste (path_copernicusmarine, " subset -i", dataset_id,
                 "-t", date_min, "-T", date_max,
                 "-z", depth[1], "-Z", depth[2],                    
                 variable, "-o", outdir, "-f", filename, 
-                "--force-download --username AAA --password PPP",  sep = " ")
+                "--username", cmems_uid," --password",cmems_pwd,  sep = " ")
 
 print(paste("======== Download starting on",date_min,"========"))
 print(command)
 system(command, intern = TRUE)
 print(paste("============= Download completed! File is stored in ",outdir,"=============", sep=" "))
 
-#######################################################################################################################
 ##multiple 
-# Dataset ID
-dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
-
 
 dmi = list()
 dmx = list()
@@ -87,7 +85,7 @@ for(i in 1:length(dmx)){
                   "-t", dmi[[i]], "-T", dmx[[i]],
                   "-z", depth[1], "-Z", depth[2],                    
                   variable, "-o", outdir, "-f", filename, 
-                  "--force-download", sep = " ")
+                  "--username", cmems_uid," --password",cmems_pwd, sep = " ")
 
 print(command)
 system(command, intern = TRUE)
